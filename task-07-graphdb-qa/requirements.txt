@@ -1,0 +1,6 @@
+langchain==0.1.16
+langchain-community==0.0.34
+langchain-groq==0.1.2
+neo4j==5.14.0
+python-dotenv==1.0.1
+gradio==4.24.0

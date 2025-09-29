@@ -1,0 +1,111 @@
+{
+  "name": "LangChain Alerts Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "langchain-alert",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"downtime_hours\"]}}",
+              "operation": "larger",
+              "value2": 4
+            }
+          ]
+        }
+      },
+      "name": "IF Downtime > 4h",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#operations",
+        "text": "⚠️ Machine downtime alert: {{$json[\"summary\"]}} ({{ $json[\"downtime_hours\"] }} hours)"
+      },
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [650, 250]
+    },
+    {
+      "parameters": {
+        "toEmail": "supervisor@example.com",
+        "subject": "Machine Downtime Alert",
+        "text": "Alert: Machine downtime exceeded 4 hours.\nDetails: {{$json[\"summary\"]}}\nDowntime: {{$json[\"downtime_hours\"]}} hours."
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [650, 350]
+    },
+    {
+      "parameters": {
+        "sheetId": "<GOOGLE_SHEET_ID>",
+        "range": "Sheet1!A1:C1",
+        "valueInputMode": "RAW",
+        "options": {},
+        "columns": [
+          "Summary",
+          "Downtime Hours",
+          "Sentiment Score"
+        ],
+        "values": [
+          "={{$json[\"summary\"]}}",
+          "={{$json[\"downtime_hours\"]}}",
+          "={{$json[\"sentiment_score\"]}}"
+        ]
+      },
+      "name": "Log to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [650, 450]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF Downtime > 4h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Downtime > 4h": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
